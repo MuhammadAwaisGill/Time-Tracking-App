@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "255936171490",
+    "project_id": "fireabase-intro",
+    "storage_bucket": "fireabase-intro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255936171490:android:68a34a2e603f2741ff3dbb",
+        "android_client_info": {
+          "package_name": "com.example.time_tracking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATGAenPt9_CymQc5JNled23UrE01gQMpk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
