@@ -5,6 +5,8 @@ import 'package:time_tracking_app/providers/time_entry_provider.dart';
 import 'package:intl/intl.dart';
 
 class AddTimeEntryScreen extends StatefulWidget {
+  const AddTimeEntryScreen({Key? key}) : super(key: key);
+
   @override
   _AddTimeEntryScreenState createState() => _AddTimeEntryScreenState();
 }
@@ -31,10 +33,17 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  'Please add projects and tasks first from the menu.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.folder_off, size: 80, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Please add projects and tasks first from the menu.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -42,9 +51,32 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
 
           // Set default values if not set
           projectId ??= provider.projects.first.id;
-          final availableTasks = provider.tasks.where((t) => t.id == projectId).toList();
+
+          // Get all tasks (no filtering by project)
+          final availableTasks = provider.tasks;
+
           if (availableTasks.isNotEmpty && taskId == null) {
             taskId = availableTasks.first.id;
+          }
+
+          if (availableTasks.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.assignment_late, size: 80, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Please add at least one task from the menu.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           return SingleChildScrollView(
@@ -66,7 +98,6 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
                     onChanged: (String? newValue) {
                       setState(() {
                         projectId = newValue;
-                        taskId = null; // Reset task when project changes
                       });
                     },
                     items: provider.projects.map<DropdownMenuItem<String>>((project) {
@@ -99,34 +130,51 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Date: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text('Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  Text(
-                    DateFormat('yyyy-MM-dd').format(date),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2101),
-                      );
-                      if (picked != null && picked != date) {
-                        setState(() {
-                          date = picked;
-                        });
-                      }
-                    },
-                    child: const Text('Select Date'),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          DateFormat('yyyy-MM-dd').format(date),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: date,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2101),
+                            );
+                            if (picked != null && picked != date) {
+                              setState(() {
+                                date = picked;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.calendar_today, size: 18),
+                          label: const Text('Change'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Total Time (in hours)',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      prefixIcon: const Icon(Icons.access_time),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
@@ -136,15 +184,19 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
                       if (double.tryParse(value) == null) {
                         return 'Please enter a valid number';
                       }
+                      if (double.parse(value) <= 0) {
+                        return 'Time must be greater than 0';
+                      }
                       return null;
                     },
                     onSaved: (value) => totalTime = double.parse(value!),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Note',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'Notes (Optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      prefixIcon: const Icon(Icons.notes),
                     ),
                     maxLines: 3,
                     onSaved: (value) => notes = value ?? '',
@@ -157,19 +209,23 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           if (taskId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please add a task for this project first!')),
+                              const SnackBar(content: Text('Please select a task!')),
                             );
                             return;
                           }
                           _formKey.currentState!.save();
+
                           Provider.of<TimeEntryProvider>(context, listen: false).addTimeEntry(
                             TimeEntry(
-                              id: DateTime.now().toString(),
+                              id: DateTime.now().millisecondsSinceEpoch.toString(),
                               projectId: projectId!,
                               taskId: taskId!,
                               totalTime: totalTime,
@@ -177,7 +233,14 @@ class _AddTimeEntryScreenState extends State<AddTimeEntryScreen> {
                               notes: notes,
                             ),
                           );
+
                           Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Time entry added successfully!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
                         }
                       },
                       child: const Text('Save Entry', style: TextStyle(fontSize: 16)),

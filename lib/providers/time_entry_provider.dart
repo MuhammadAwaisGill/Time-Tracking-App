@@ -30,9 +30,10 @@ class TimeEntryProvider with ChangeNotifier {
   }
 
   void deleteProject(String id) {
-    _projects.removeWhere((project) => project.id == id);
-    _tasks.removeWhere((task) => task.id == id);
+    // Delete related tasks and entries
+    _tasks.removeWhere((task) => task.id.startsWith(id));
     _entries.removeWhere((entry) => entry.projectId == id);
+    _projects.removeWhere((project) => project.id == id);
     notifyListeners();
   }
 
@@ -43,8 +44,9 @@ class TimeEntryProvider with ChangeNotifier {
   }
 
   void deleteTask(String id) {
-    _tasks.removeWhere((task) => task.id == id);
+    // Delete related entries
     _entries.removeWhere((entry) => entry.taskId == id);
+    _tasks.removeWhere((task) => task.id == id);
     notifyListeners();
   }
 }
